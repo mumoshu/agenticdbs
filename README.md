@@ -1,68 +1,53 @@
 # agenticdbs
 
+```
+                          "find friends-of-friends"
+                          "build me a REST API"
+                          "migrate users to postgres"
+                                    |
+                                    v
+                            +--------------+
+                You ------->| Claude Code  |
+                            |   /db skill  |
+                            +--------------+
+                              |          |
+                    query /   |          |   \ generate
+                   migrate    |          |    app code
+                              v          v
+                    +------------+  +------------+
+                    | SurrealDB  |  | PostgreSQL |    <-- containers
+                    |------------|  |------------|
+                    | relational |  | relational |
+                    | graph      |  | pgvector   |
+                    | vector     |  | AGE(graph) |
+                    | timeseries |  | TimescaleDB|
+                    | JSON       |  | JSONB      |
+                    | full-text  |  | tsvector   |
+                    +------------+  +------------+
+                              ^          ^
+                              |          |
+                              +----++----+
+                                   ||
+                            your app connects
+                              directly too
+```
+
 A multi-backend agentic database system that runs **SurrealDB** and **PostgreSQL** side by side — each loaded with relational, graph, vector, timeseries, JSON, and full-text search capabilities.
 
-Built for AI agents (like Claude Code) to query, migrate, and build apps across both backends through a single CLI.
+Talk to it in natural language. It queries, migrates, debugs, and builds apps for you — or gives your app direct access to the databases.
 
 ## Getting Started
+
+### Requirements
+
+- Go 1.25+
+- Docker & Docker Compose
+- [Claude Code](https://claude.ai/claude-code) (for agentic usage via the `/db` skill)
 
 ### Install
 
 ```bash
 go install github.com/mumoshu/agenticdbs@latest
-```
-
-### Run
-
-```bash
-# Extract config files (docker-compose, seeds, docs, Claude skill)
-agenticdbs setup
-
-# Start SurrealDB + PostgreSQL containers
-agenticdbs up
-
-# Load demo data (users, products, orders, social graph, embeddings, metrics)
-agenticdbs seed
-```
-
-## Example: One Dataset, Two Query Languages
-
-**Relational** — find Alice's orders:
-
-```bash
-$ agenticdbs query -b surreal "SELECT * FROM orders WHERE user = users:alice"
-$ agenticdbs query -b postgres "SELECT * FROM orders WHERE user_id = 1"
-```
-
-**Graph traversal** — who does Alice know, and who do *they* know?
-
-```bash
-$ agenticdbs query -b surreal \
-    "SELECT ->knows->users->knows->users.name AS friends_of_friends FROM users:alice"
-# ⟹ [{ friends_of_friends: ["Dave Brown", "Eve Davis"] }]
-```
-
-```bash
-$ agenticdbs query -b postgres \
-    "SELECT * FROM cypher('social', \$\$ MATCH (a:User {name: 'Alice Johnson'})-[:KNOWS]->()-[:KNOWS]->(fof) RETURN fof.name \$\$) as (name agtype)"
-# ⟹ "Dave Brown"
-#    "Eve Davis"
-```
-
-**Full-text search** — find products mentioning "wireless":
-
-```bash
-$ agenticdbs query -b surreal \
-    "SELECT name, search::score(1) AS score FROM products WHERE description @1@ 'wireless' ORDER BY score DESC"
-# ⟹ Wireless Bluetooth Headphones  (score: 0.69)
-#    Wireless Ergonomic Mouse        (score: 0.61)
-#    The Great Adventure Novel       (score: 0.42)
-```
-
-**Teardown:**
-
-```bash
-agenticdbs down
 ```
 
 ## Using with Claude Code
@@ -93,14 +78,7 @@ Claude Code: I'll spawn sub-agents for both backends in parallel...
 
 The skill auto-detects intent (query, debug, migrate, app-dev) and picks the right backend. For complex tasks, it delegates to backend-specific sub-agents.
 
-## What's Inside
+## Implementation
 
-| Backend    | Port  | Capabilities |
-|------------|-------|-------------|
-| SurrealDB  | 18000 | Native relational, graph (RELATE), vector (HNSW), timeseries, schemaless JSON, full-text (BM25) |
-| PostgreSQL | 15432 | pgvector, Apache AGE (graph/Cypher), TimescaleDB, JSONB, tsvector |
-
-## Requirements
-
-- Go 1.25+
-- Docker & Docker Compose
+- [docs/backends.md](docs/backends.md) — Backend details, Dockerfiles, query guides, and skills
+- [docs/agenticdbs_cli.md](docs/agenticdbs_cli.md) — CLI reference and query examples
