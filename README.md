@@ -80,5 +80,6 @@ The skill auto-detects intent (query, debug, migrate, app-dev) and picks the rig
 
 ## Implementation
 
+- [docs/design.md](docs/design.md) — Architecture and interaction flow (how humans and Claude Code use agenticdbs)
 - [docs/backends.md](docs/backends.md) — Backend details, Dockerfiles, query guides, and skills
 - [docs/agenticdbs_cli.md](docs/agenticdbs_cli.md) — CLI reference and query examples
